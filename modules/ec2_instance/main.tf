@@ -1,15 +1,3 @@
-provider "aws" {
-  region = var.region
-}
-
-terraform {
-  backend "s3" {
-    bucket = "my-tf-config"
-    key = "dev/terraform.tfstate"
-    region = "eu-central-1"
-  }
-}
-
 data "aws_ami" "latest_ubuntu" {
   owners = ["amazon"]
   most_recent = true
@@ -17,7 +5,6 @@ data "aws_ami" "latest_ubuntu" {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
   }
-
 }
 
 locals {
@@ -96,13 +83,13 @@ resource "aws_iam_role" "ec2_stop_role" {
 
 data "archive_file" "lambda_ec2_stop" {
   type        = "zip"
-  source_file = "lambda_ec2_stop.py"
-  output_path = "lambda_ec2_stop.zip"
+  source_file = "../modules/ec2_instance/lambda_ec2_stop.py"
+  output_path = "../modules/ec2_instance/lambda_ec2_stop.zip"
 }
 
 resource "aws_lambda_function" "stop_instance" {
   tags = merge(local.common_tags, {Name = "EC2 instance stop lambda function"})
-  filename = "lambda_ec2_stop.zip"
+  filename = "../modules/ec2_instance/lambda_ec2_stop.zip"
   function_name = "ec2_instance_stop"
   role          = aws_iam_role.ec2_stop_role.arn
   handler       = "lambda_ec2_stop.ec2_instance_stop"
